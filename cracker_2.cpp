@@ -16,25 +16,25 @@ if release use: "g++ cracker_2.o -o cracker_2 -lsfml-audio -lsfml-graphics -lsfm
 #include <SFML/Audio.hpp>
 #include "file_commander.h"
 
-//=====================DEBUG  SWITCH=====================//
-#define DEBUG_MODE
-//-------------------------------------------------------//
+//===============================DEBUG  SWITCH===============================//
+//#define DEBUG_MODE
+//---------------------------------------------------------------------------//
 #ifndef DEBUG_MODE
 #define RELEASE
 #else
 #define DEBUG
 #endif
-//=======================================================//
+//===========================================================================//
 
 #ifdef RELEASE
-//========================SOURCE!========================//
+//==================================SOURCE!==================================//
 #include "font_memory.h"
 #include "texture_memory.h"
 #include "sound_buffer_memory.h"
-//=======================================================//
+//===========================================================================//
 #endif
 
-//=======================CONSTANTS=======================//
+//=================================CONSTANTS=================================//
 const size_t hash_expected = 13842028284762129553;
 const int PASS_CHECK_NAME_SIZE = 20;
 const int POS_1 = 0x101b;
@@ -44,8 +44,8 @@ const unsigned char REPLACE_BYTE_2 = 0x51;
 
 #ifdef DEBUG
 const int FONT_NAME_SIZE    = 20;
-const int TEXTURE_NAME_SIZE    = 20;
-const int SOUND_NAME_SIZE    = 20;
+const int TEXTURE_NAME_SIZE = 20;
+const int SOUND_NAME_SIZE   = 20;
 #endif
 
 const int COLOR_THEME_R = 150;
@@ -67,65 +67,115 @@ const int TEXT_SIZE = BUTTON_HEIGHT;
 const int SOUND_VOLUME = 10;
 
 const double TIME_TO_WAIT = 1.0;
-//=======================================================//
+//===========================================================================//
 
+//==================================BUTTON!==================================//
 class my_button {
 public:
+    struct parameters {
+        struct clr_theme {
+            int chanel_r;
+            int chanel_g;
+            int chanel_b;
+            int delta;
+            int max;
+
+            clr_theme(int chanel_r_in, 
+                      int chanel_g_in, 
+                      int chanel_b_in, 
+                      int delta_in, 
+                      int max_in);
+        };
+
+        struct proportions {
+            int up_left_corner_x;
+            int up_left_corner_y;
+            int width;
+            int height;
+            int outline_width;
+            int text_size;
+
+            proportions(int up_left_corner_x_in, 
+                        int up_left_corner_y_in, 
+                        int width_in, 
+                        int height_in, 
+                        int outline_width_in, 
+                        int text_size_in);
+        };
+        
+        clr_theme *clr_thm;
+        proportions *props;
+
+        parameters(clr_theme *clr_thm_in, proportions *props_in) {
+            clr_thm = clr_thm_in;
+            props = props_in;
+        }
+    };
+
     int is_button_pressed;
 
-    my_button(sf::Font &font);
+    my_button(struct parameters *params_in, sf::Font &font);
 
     void get_press_update(sf::Event &event);
 
     //void graphic_update();
 
-    int update(int is_loading, const char *text, const sf::Color &fill_color);
+    int update(int is_loading, const char *text, 
+               const sf::Color &fill_color);
 
     void draw(sf::RenderWindow &window);
 
     ~my_button();
 private:
+    parameters *params;
     sf::Text text;
     sf::RectangleShape rectangle;
 };
+//===========================================================================//
 
+//================================BACKGROUND!================================//
 class my_background {
 public:
-    my_background(sf::Texture &texture);
+    my_background(int width_in, int height_in, sf::Texture &texture);
 
     void draw(sf::RenderWindow &window);
 
     ~my_background();
 private:
+    int width;
+    int height;
     sf::RectangleShape background;
 };
+//===========================================================================//
 
-//===================SOURCE  FUNCTIONS===================//
-int source_load(sf::Font &font, sf::Texture &texture, sf::SoundBuffer &sound_buffer);
-//=======================================================//
+//=============================SOURCE  FUNCTIONS=============================//
+int source_load(sf::Font &font, sf::Texture &texture, 
+                sf::SoundBuffer &sound_buffer);
+//===========================================================================//
 
-//====================SOUND FUNCTIONS====================//
-void my_play(sf::Sound &sound, sf::SoundBuffer &sound_buffer, int sound_volume);
-//=======================================================//
+//==============================SOUND FUNCTIONS==============================//
+void my_play(sf::Sound &sound, sf::SoundBuffer &sound_buffer, 
+             int sound_volume);
+//===========================================================================//
 
-//====================TIMER FUNCTIONS====================//
+//==============================TIMER FUNCTIONS==============================//
 int timer_checker(double control_point, double sec_to_wait);
-//=======================================================//
+//===========================================================================//
 
-//====================HASH  FUNCTIONS====================//
+//==============================HASH  FUNCTIONS==============================//
 size_t hash_func(unsigned char *word, size_t word_len);
-//=======================================================//
+//===========================================================================//
 
-//====================HACK  FUNCTIONS====================//
+//==============================HACK  FUNCTIONS==============================//
 int crack(FILE *code_in, unsigned char *buf);
-//=======================================================//
+//===========================================================================//
 
 int main() {
     sf::Font font;
     sf::Texture texture;
     sf::SoundBuffer sound_buffer;
     int source_load_res = 0;
-    const char* crash_reports[] = {"",
+    const char* crash_reports[] = {"UNEXPECTED_ERROR\n",
                                    "Crash report: font load error\n",
                                    "Crash report: texture load error\n",
                                    "Crash report: sound load error\n",
@@ -135,13 +185,27 @@ int main() {
         return 1;
     }
 
-    sf::RenderWindow window(sf::VideoMode(WINDOW_SIZE, WINDOW_SIZE), "cracker_v0.2");
-    my_button *button = new my_button(font);
-    my_background *bg = new my_background(texture);
+    sf::RenderWindow window(sf::VideoMode(WINDOW_SIZE, WINDOW_SIZE), 
+                            "cracker_v0.2");
+
+    my_button::parameters::clr_theme *main_clr_theme = new my_button::parameters::clr_theme(COLOR_THEME_R, 
+                                                                                            COLOR_THEME_G, 
+                                                                                            COLOR_THEME_B, 
+                                                                                            COLOR_THEME_DELTA, 
+                                                                                            COLOR_THEME_MAX);
+    my_button::parameters::proportions *main_props = new my_button::parameters::proportions(BUTTON_UPPER_LEFT_CORNER_X, 
+                                                                                            BUTTON_UPPER_LEFT_CORNER_Y, 
+                                                                                            BUTTON_WIDTH, 
+                                                                                            BUTTON_HEIGHT, 
+                                                                                            BUTTON_OUTLINE,
+                                                                                            TEXT_SIZE);
+    my_button::parameters *main_params = new my_button::parameters(main_clr_theme, main_props);
+    my_button *button = new my_button(main_params, font);
+    my_background *bg = new my_background(WINDOW_SIZE, WINDOW_SIZE, texture);
     sf::Sound sound;
     my_play(sound, sound_buffer, SOUND_VOLUME);
 
-    //====================PRE-LOGIC BLOCK====================//
+    //==============================PRE-LOGIC BLOCK==============================//
     int button_mode = 7;
     char pass_check[PASS_CHECK_NAME_SIZE] = "break2";
     FILE *code_in = NULL;
@@ -155,7 +219,7 @@ int main() {
                                   "More RAM required!",
                                   "Crack it.",
                                   "UNEXPECTED_ERROR"};
-    //=======================================================//
+    //===========================================================================//
 
     while (window.isOpen()) {
         sf::Event event;
@@ -166,7 +230,7 @@ int main() {
             else button->get_press_update(event);
         }
 
-        //======================LOGIC BLOCK======================//
+        //================================LOGIC BLOCK================================//
         switch (button_mode) {
             case 0: code_in = fopen(pass_check, "r+b");
                     if (!code_in) {
@@ -175,7 +239,8 @@ int main() {
                     }
                     else {
                         size_t code_in_len = file_len(pass_check);
-                        unsigned char *buf = (unsigned char *) calloc(code_in_len + 10, sizeof(unsigned char));
+                        unsigned char *buf = (unsigned char *) calloc(code_in_len + 10, 
+                                                                      sizeof(unsigned char));
                         if (!buf) {
                             button_mode = 6; 
                             control_point = (double) clock() / CLOCKS_PER_SEC;
@@ -209,26 +274,30 @@ int main() {
             case 7: if (button->is_button_pressed) button_mode = 0;                  break;
             default: printf("Crash report: undefined button_mode = %d\n", button_mode);
         }
-        //=======================================================//
+        //===========================================================================//
 
         switch (button_mode) {
-            case 0: button->update(1, button_texts[0]/*"Loading..."*/, sf::Color::Red);
+            case 0: button->update(1, button_texts[0], sf::Color::Red);
                     break;
-            case 1: button->update(0, button_texts[1]/*"Program not found!"*/, sf::Color::Red);
+            case 1: button->update(0, button_texts[1], sf::Color::Red);
                     break;
-            case 2: button->update(0, button_texts[2]/*"Cracked."*/, sf::Color::Green);
+            case 2: button->update(0, button_texts[2], sf::Color::Green);
                     break;
-            case 3: button->update(0, button_texts[3]/*"Crack failed!"*/, sf::Color::Red);
+            case 3: button->update(0, button_texts[3], sf::Color::Red);
                     break;
-            case 4: button->update(0, button_texts[4]/*"Wrong program!"*/, sf::Color::Red);
+            case 4: button->update(0, button_texts[4], sf::Color::Red);
                     break;
-            case 5: button->update(0, button_texts[5]/*"Try again?"*/, sf::Color(COLOR_THEME_R, COLOR_THEME_G, COLOR_THEME_B));
+            case 5: button->update(0, button_texts[5], sf::Color(COLOR_THEME_R, 
+                                                                 COLOR_THEME_G, 
+                                                                 COLOR_THEME_B));
                     break;
-            case 6: button->update(0, button_texts[6]/*"More RAM required!"*/, sf::Color::Red);
+            case 6: button->update(0, button_texts[6], sf::Color::Red);
                     break;
-            case 7: button->update(0, button_texts[7]/*"Crack it."*/, sf::Color(COLOR_THEME_R, COLOR_THEME_G, COLOR_THEME_B));
+            case 7: button->update(0, button_texts[7], sf::Color(COLOR_THEME_R, 
+                                                                 COLOR_THEME_G, 
+                                                                 COLOR_THEME_B));
                     break;
-            default:button->update(0, button_texts[8]/*"UNEXPECTED_ERROR"*/, sf::Color::Red);
+            default:button->update(0, button_texts[8], sf::Color::Red);
         }
 
         window.clear();
@@ -239,21 +308,58 @@ int main() {
         window.display();
     }
     
+    delete main_clr_theme;
+    delete main_props;
+    delete main_params;
     delete bg;
     delete button;
     return 0;
 }
 
-my_button::my_button(sf::Font &font) {
-    rectangle.setSize(sf::Vector2f(BUTTON_WIDTH, BUTTON_HEIGHT));
-    rectangle.setFillColor(sf::Color(COLOR_THEME_R, COLOR_THEME_G, COLOR_THEME_B));
-    rectangle.setOutlineThickness(BUTTON_OUTLINE);
-    rectangle.setOutlineColor(sf::Color(COLOR_THEME_R + COLOR_THEME_DELTA, COLOR_THEME_G + COLOR_THEME_DELTA, COLOR_THEME_B + COLOR_THEME_DELTA));
-    rectangle.setPosition(BUTTON_UPPER_LEFT_CORNER_X, BUTTON_UPPER_LEFT_CORNER_Y);
+my_button::parameters::clr_theme::clr_theme(int chanel_r_in, 
+                                            int chanel_g_in, 
+                                            int chanel_b_in, 
+                                            int delta_in, 
+                                            int max_in) {
+    chanel_r = chanel_r_in;
+    chanel_g = chanel_g_in;
+    chanel_b = chanel_b_in;
+    delta = delta_in;
+    max = max_in;
+}
+
+my_button::parameters::proportions::proportions(int up_left_corner_x_in, 
+                                                int up_left_corner_y_in, 
+                                                int width_in, 
+                                                int height_in, 
+                                                int outline_width_in, 
+                                                int text_size_in) {
+    up_left_corner_x = up_left_corner_x_in;
+    up_left_corner_y = up_left_corner_y_in;
+    width = width_in;
+    height = height_in;
+    outline_width = outline_width_in;
+    text_size = text_size_in;
+}
+
+my_button::my_button(parameters *params_in, sf::Font &font) {
+    params = params_in;
+    rectangle.setSize(sf::Vector2f(params->props->width, params->props->height));
+    rectangle.setFillColor(sf::Color(params->clr_thm->chanel_r, 
+                                     params->clr_thm->chanel_g, 
+                                     params->clr_thm->chanel_b));
+    rectangle.setOutlineThickness(params->props->outline_width);
+    rectangle.setOutlineColor(sf::Color(params->clr_thm->chanel_r + params->clr_thm->delta, 
+                                        params->clr_thm->chanel_g + params->clr_thm->delta, 
+                                        params->clr_thm->chanel_b + params->clr_thm->delta));
+    rectangle.setPosition(params->props->up_left_corner_x, params->props->up_left_corner_y);
     text.setFont(font);
-    text.setCharacterSize(TEXT_SIZE);
-    text.setFillColor(sf::Color(COLOR_THEME_MAX - COLOR_THEME_R, COLOR_THEME_MAX - COLOR_THEME_G, COLOR_THEME_MAX - COLOR_THEME_B));
-    text.setPosition(BUTTON_UPPER_LEFT_CORNER_X + BUTTON_OUTLINE, BUTTON_UPPER_LEFT_CORNER_Y - BUTTON_OUTLINE / 2);
+    text.setCharacterSize(params->props->text_size);
+    text.setFillColor(sf::Color(params->clr_thm->max - params->clr_thm->chanel_r, 
+                                params->clr_thm->max - params->clr_thm->chanel_g, 
+                                params->clr_thm->max - params->clr_thm->chanel_b));
+    text.setPosition(params->props->up_left_corner_x + params->props->outline_width, 
+                     params->props->up_left_corner_y - params->props->outline_width / 2);
     is_button_pressed = 0;
 }
 
@@ -261,21 +367,28 @@ void my_button::get_press_update(sf::Event &event) {
     is_button_pressed = 0;
     if ((event.type == sf::Event::MouseButtonPressed && 
          event.mouseButton.button == sf::Mouse::Left) && 
-       ((BUTTON_UPPER_LEFT_CORNER_X < event.mouseButton.x && 
-         event.mouseButton.x < BUTTON_UPPER_LEFT_CORNER_X + BUTTON_WIDTH) && 
-        (BUTTON_UPPER_LEFT_CORNER_Y < event.mouseButton.y && 
-         event.mouseButton.y < BUTTON_UPPER_LEFT_CORNER_Y + BUTTON_HEIGHT))) is_button_pressed = 1;
+       ((params->props->up_left_corner_x < event.mouseButton.x && 
+         event.mouseButton.x < params->props->up_left_corner_x + params->props->width) && 
+        (params->props->up_left_corner_y < event.mouseButton.y && 
+         event.mouseButton.y < params->props->up_left_corner_y + params->props->height))) 
+        is_button_pressed = 1;
 }
 
 int my_button::update(int is_loading, const char *text_str, const sf::Color &fill_color) {
     text.setString(text_str);
     if (is_loading) {
-        rectangle.setFillColor(sf::Color(COLOR_THEME_R - COLOR_THEME_DELTA * 2, COLOR_THEME_G - COLOR_THEME_DELTA * 2, COLOR_THEME_B - COLOR_THEME_DELTA * 2));
-        rectangle.setOutlineColor(sf::Color(COLOR_THEME_R - COLOR_THEME_DELTA, COLOR_THEME_G - COLOR_THEME_DELTA, COLOR_THEME_B - COLOR_THEME_DELTA));
+        rectangle.setFillColor(sf::Color(params->clr_thm->chanel_r - params->clr_thm->delta * 2, 
+                                         params->clr_thm->chanel_g - params->clr_thm->delta * 2, 
+                                         params->clr_thm->chanel_b - params->clr_thm->delta * 2));
+        rectangle.setOutlineColor(sf::Color(params->clr_thm->chanel_r - params->clr_thm->delta, 
+                                            params->clr_thm->chanel_g - params->clr_thm->delta, 
+                                            params->clr_thm->chanel_b - params->clr_thm->delta));
         return 0;
     }
     rectangle.setFillColor(fill_color);
-    rectangle.setOutlineColor(sf::Color(COLOR_THEME_R + COLOR_THEME_DELTA, COLOR_THEME_G + COLOR_THEME_DELTA, COLOR_THEME_B + COLOR_THEME_DELTA));
+    rectangle.setOutlineColor(sf::Color(params->clr_thm->chanel_r + params->clr_thm->delta, 
+                                        params->clr_thm->chanel_g + params->clr_thm->delta, 
+                                        params->clr_thm->chanel_b + params->clr_thm->delta));
     return 0;
 }
 
@@ -288,11 +401,13 @@ my_button::~my_button() {
     printf("END\n");
 }
 
-my_background::my_background(sf::Texture &texture) {
-    background.setSize(sf::Vector2f(WINDOW_SIZE, WINDOW_SIZE));
+my_background::my_background(int width_in, int height_in, sf::Texture &texture) {
+    width = width_in;
+    height = height_in;
+    background.setSize(sf::Vector2f(width, height));
     background.setFillColor(sf::Color::White);
     background.setTexture(&texture);
-    background.setTextureRect(sf::IntRect(0, 0, WINDOW_SIZE, WINDOW_SIZE));
+    background.setTextureRect(sf::IntRect(0, 0, width, height));
 }
 
 void my_background::draw(sf::RenderWindow &window) {
@@ -305,18 +420,9 @@ my_background::~my_background() {
 
 int source_load(sf::Font &font, sf::Texture &texture, sf::SoundBuffer &sound_buffer) {
     #ifdef RELEASE
-    if (!font.loadFromMemory(FONT_MEM, FONT_MEM_SIZE)) {
-        //printf("Crash report: font load error\n"); 
-        return 1;
-    }
-    if (!texture.loadFromMemory(TEXTURE_MEM, TEXTURE_MEM_SIZE)) {
-        //printf("Crash report: texture load error\n"); 
-        return 2;
-    }
-    if (!sound_buffer.loadFromMemory(SOUND_BUF_MEM, SOUND_BUF_MEM_SIZE)) {
-        //printf("Crash report: sound load error\n"); 
-        return 3;
-    }
+    if (!font.loadFromMemory(FONT_MEM, FONT_MEM_SIZE)) return 1;
+    if (!texture.loadFromMemory(TEXTURE_MEM, TEXTURE_MEM_SIZE)) return 2;
+    if (!sound_buffer.loadFromMemory(SOUND_BUF_MEM, SOUND_BUF_MEM_SIZE)) return 3;
     #endif
 
     #ifdef DEBUG

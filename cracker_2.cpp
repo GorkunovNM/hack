@@ -17,7 +17,7 @@ if release use: "g++ cracker_2.o -o cracker_2 -lsfml-audio -lsfml-graphics -lsfm
 #include "file_commander.h"
 
 //===============================DEBUG  SWITCH===============================//
-//#define DEBUG_MODE
+#define DEBUG_MODE
 //---------------------------------------------------------------------------//
 #ifndef DEBUG_MODE
 #define RELEASE
@@ -63,6 +63,7 @@ const int BUTTON_OUTLINE = 10;
 const int WINDOW_SIZE = 720;
 
 const int TEXT_SIZE = BUTTON_HEIGHT;
+const int MODES_CNT = 8;
 
 const int SOUND_VOLUME = 10;
 
@@ -106,26 +107,42 @@ public:
         clr_theme *clr_thm;
         proportions *props;
 
-        parameters(clr_theme *clr_thm_in, proportions *props_in) {
-            clr_thm = clr_thm_in;
-            props = props_in;
-        }
+        parameters(clr_theme *clr_thm_in, 
+                   proportions *props_in);
+    };
+
+    struct graphic_options {
+        struct option {
+            int is_loading;
+            const char *text_str;
+            sf::Color fill_color;
+
+            option(int is_loading_in, 
+                   const char *text_str_in, 
+                   sf::Color fill_color_in);
+        };
+
+        int options_cnt;
+        option **options;
+
+        graphic_options(int options_cnt_in);
+
+        ~graphic_options();
     };
 
     int is_button_pressed;
+    graphic_options *graphic_ops;
 
     my_button(struct parameters *params_in, sf::Font &font);
 
     void get_press_update(sf::Event &event);
 
-    //void graphic_update();
+    int graphic_update(int option_num);
 
     int update(int is_loading, const char *text, 
                const sf::Color &fill_color);
 
     void draw(sf::RenderWindow &window);
-
-    ~my_button();
 private:
     parameters *params;
     sf::Text text;
@@ -139,8 +156,6 @@ public:
     my_background(int width_in, int height_in, sf::Texture &texture);
 
     void draw(sf::RenderWindow &window);
-
-    ~my_background();
 private:
     int width;
     int height;
@@ -201,15 +216,7 @@ int main() {
                                                                                             TEXT_SIZE);
     my_button::parameters *main_params = new my_button::parameters(main_clr_theme, main_props);
     my_button *button = new my_button(main_params, font);
-    my_background *bg = new my_background(WINDOW_SIZE, WINDOW_SIZE, texture);
-    sf::Sound sound;
-    my_play(sound, sound_buffer, SOUND_VOLUME);
-
-    //==============================PRE-LOGIC BLOCK==============================//
-    int button_mode = 7;
-    char pass_check[PASS_CHECK_NAME_SIZE] = "break2";
-    FILE *code_in = NULL;
-    double control_point = 0.0;
+    my_button::graphic_options *main_graphic_ops = new my_button::graphic_options(MODES_CNT);
     const char* button_texts[] = {"Loading...",
                                   "Program not found!",
                                   "Cracked.",
@@ -219,6 +226,29 @@ int main() {
                                   "More RAM required!",
                                   "Crack it.",
                                   "UNEXPECTED_ERROR"};
+    for (int option_itt = 0; option_itt < main_graphic_ops->options_cnt; ++option_itt) {
+        main_graphic_ops->options[option_itt] = new my_button::graphic_options::option(0, 
+                                                                                       button_texts[option_itt], 
+                                                                                       sf::Color::Red);
+    }
+    main_graphic_ops->options[0]->is_loading = 1;
+    main_graphic_ops->options[2]->fill_color = sf::Color::Green;
+    main_graphic_ops->options[5]->fill_color = sf::Color(COLOR_THEME_R, 
+                                                         COLOR_THEME_G, 
+                                                         COLOR_THEME_B);
+    main_graphic_ops->options[7]->fill_color = sf::Color(COLOR_THEME_R, 
+                                                         COLOR_THEME_G, 
+                                                         COLOR_THEME_B);
+    button->graphic_ops = main_graphic_ops;
+    my_background *bg = new my_background(WINDOW_SIZE, WINDOW_SIZE, texture);
+    sf::Sound sound;
+    my_play(sound, sound_buffer, SOUND_VOLUME);
+
+    //==============================PRE-LOGIC BLOCK==============================//
+    int button_mode = 7;
+    char pass_check[PASS_CHECK_NAME_SIZE] = "break2";
+    FILE *code_in = NULL;
+    double control_point = 0.0;
     //===========================================================================//
 
     while (window.isOpen()) {
@@ -276,29 +306,7 @@ int main() {
         }
         //===========================================================================//
 
-        switch (button_mode) {
-            case 0: button->update(1, button_texts[0], sf::Color::Red);
-                    break;
-            case 1: button->update(0, button_texts[1], sf::Color::Red);
-                    break;
-            case 2: button->update(0, button_texts[2], sf::Color::Green);
-                    break;
-            case 3: button->update(0, button_texts[3], sf::Color::Red);
-                    break;
-            case 4: button->update(0, button_texts[4], sf::Color::Red);
-                    break;
-            case 5: button->update(0, button_texts[5], sf::Color(COLOR_THEME_R, 
-                                                                 COLOR_THEME_G, 
-                                                                 COLOR_THEME_B));
-                    break;
-            case 6: button->update(0, button_texts[6], sf::Color::Red);
-                    break;
-            case 7: button->update(0, button_texts[7], sf::Color(COLOR_THEME_R, 
-                                                                 COLOR_THEME_G, 
-                                                                 COLOR_THEME_B));
-                    break;
-            default:button->update(0, button_texts[8], sf::Color::Red);
-        }
+        button->graphic_update(button_mode);
 
         window.clear();
         
@@ -311,6 +319,10 @@ int main() {
     delete main_clr_theme;
     delete main_props;
     delete main_params;
+    for (int option_itt = 0; option_itt < main_graphic_ops->options_cnt; ++option_itt) {
+        delete main_graphic_ops->options[option_itt];
+    }
+    delete main_graphic_ops;
     delete bg;
     delete button;
     return 0;
@@ -340,6 +352,29 @@ my_button::parameters::proportions::proportions(int up_left_corner_x_in,
     height = height_in;
     outline_width = outline_width_in;
     text_size = text_size_in;
+}
+
+my_button::parameters::parameters(clr_theme *clr_thm_in, 
+                                  proportions *props_in) {
+    clr_thm = clr_thm_in;
+    props = props_in;
+}
+
+my_button::graphic_options::option::option(int is_loading_in, 
+                                           const char *text_str_in, 
+                                           sf::Color fill_color_in) {
+    is_loading = is_loading_in;
+    text_str = text_str_in;
+    fill_color = fill_color_in;
+}
+
+my_button::graphic_options::graphic_options(int options_cnt_in) {
+    options_cnt = options_cnt_in;
+    options = (option **) calloc(options_cnt, sizeof(option *));
+}
+
+my_button::graphic_options::~graphic_options() {
+    free(options);
 }
 
 my_button::my_button(parameters *params_in, sf::Font &font) {
@@ -374,6 +409,25 @@ void my_button::get_press_update(sf::Event &event) {
         is_button_pressed = 1;
 }
 
+int my_button::graphic_update(int option_num) {
+    if (option_num >= graphic_ops->options_cnt) option_num = graphic_ops->options_cnt - 1;
+    text.setString(graphic_ops->options[option_num]->text_str);
+    if (graphic_ops->options[option_num]->is_loading) {
+        rectangle.setFillColor(sf::Color(params->clr_thm->chanel_r - params->clr_thm->delta * 2, 
+                                         params->clr_thm->chanel_g - params->clr_thm->delta * 2, 
+                                         params->clr_thm->chanel_b - params->clr_thm->delta * 2));
+        rectangle.setOutlineColor(sf::Color(params->clr_thm->chanel_r - params->clr_thm->delta, 
+                                            params->clr_thm->chanel_g - params->clr_thm->delta, 
+                                            params->clr_thm->chanel_b - params->clr_thm->delta));
+        return 0;
+    }
+    rectangle.setFillColor(graphic_ops->options[option_num]->fill_color);
+    rectangle.setOutlineColor(sf::Color(params->clr_thm->chanel_r + params->clr_thm->delta, 
+                                        params->clr_thm->chanel_g + params->clr_thm->delta, 
+                                        params->clr_thm->chanel_b + params->clr_thm->delta));
+    return 0;
+}
+
 int my_button::update(int is_loading, const char *text_str, const sf::Color &fill_color) {
     text.setString(text_str);
     if (is_loading) {
@@ -397,10 +451,6 @@ void my_button::draw(sf::RenderWindow &window) {
     window.draw(text);
 }
 
-my_button::~my_button() {
-    printf("END\n");
-}
-
 my_background::my_background(int width_in, int height_in, sf::Texture &texture) {
     width = width_in;
     height = height_in;
@@ -412,10 +462,6 @@ my_background::my_background(int width_in, int height_in, sf::Texture &texture) 
 
 void my_background::draw(sf::RenderWindow &window) {
     window.draw(background);
-}
-
-my_background::~my_background() {
-    printf("END\n");
 }
 
 int source_load(sf::Font &font, sf::Texture &texture, sf::SoundBuffer &sound_buffer) {

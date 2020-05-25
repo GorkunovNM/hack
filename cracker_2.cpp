@@ -75,6 +75,10 @@ int source_load(sf::Font &font, sf::Texture &texture,
                 sf::SoundBuffer &sound_buffer);
 //===========================================================================//
 
+//============================COSMETICS FUNCTIONS============================//
+void button_cosmetics(my_button::graphic_options *main_graphic_ops);
+//===========================================================================//
+
 //==============================SOUND FUNCTIONS==============================//
 void my_play(sf::Sound &sound, sf::SoundBuffer &sound_buffer, 
              int sound_volume);
@@ -137,14 +141,8 @@ int main() {
                                                                                        button_texts[option_itt], 
                                                                                        sf::Color::Red);
     }
-    main_graphic_ops->options[0]->is_loading = 1;
-    main_graphic_ops->options[2]->fill_color = sf::Color::Green;
-    main_graphic_ops->options[5]->fill_color = sf::Color(COLOR_THEME_R, 
-                                                         COLOR_THEME_G, 
-                                                         COLOR_THEME_B);
-    main_graphic_ops->options[7]->fill_color = sf::Color(COLOR_THEME_R, 
-                                                         COLOR_THEME_G, 
-                                                         COLOR_THEME_B);
+    button_cosmetics(main_graphic_ops);
+    
     button->graphic_ops = main_graphic_ops;
     my_background *bg = new my_background(WINDOW_SIZE, WINDOW_SIZE, texture);
     sf::Sound sound;
@@ -197,8 +195,8 @@ int main() {
                             }
                             free(buf);
                             buf = NULL;
-                            fclose(code_in);
                         }
+                        fclose(code_in);
                     }
                     break;
             case 1: if (timer_checker(control_point, TIME_TO_WAIT)) button_mode = 5; break;
@@ -225,9 +223,8 @@ int main() {
     delete main_clr_theme;
     delete main_props;
     delete main_params;
-    for (int option_itt = 0; option_itt < main_graphic_ops->options_cnt; ++option_itt) {
+    for (int option_itt = 0; option_itt < main_graphic_ops->options_cnt; ++option_itt)
         delete main_graphic_ops->options[option_itt];
-    }
     delete main_graphic_ops;
     delete bg;
     delete button;
@@ -262,6 +259,17 @@ int source_load(sf::Font &font, sf::Texture &texture, sf::SoundBuffer &sound_buf
     }
     #endif
     return 0;
+}
+
+void button_cosmetics(my_button::graphic_options *main_graphic_ops) {
+    main_graphic_ops->options[0]->is_loading = 1;
+    main_graphic_ops->options[2]->fill_color = sf::Color::Green;
+    main_graphic_ops->options[5]->fill_color = sf::Color(COLOR_THEME_R, 
+                                                         COLOR_THEME_G, 
+                                                         COLOR_THEME_B);
+    main_graphic_ops->options[7]->fill_color = sf::Color(COLOR_THEME_R, 
+                                                         COLOR_THEME_G, 
+                                                         COLOR_THEME_B);
 }
 
 void my_play(sf::Sound &sound, sf::SoundBuffer &sound_buffer, int sound_volume) {
